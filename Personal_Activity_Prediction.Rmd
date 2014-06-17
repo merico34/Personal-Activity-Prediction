@@ -1,0 +1,159 @@
+Personal Activity Prediction
+========================================================
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. 
+In this project, my goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+## Data Loading
+```{r echo=TRUE,cache=TRUE}
+setwd("C:/Users/HomeUser/Documents/Spécialité Data Science/Practical Machine Learning/Project")
+train <- read.csv("pml-training.csv", header = T
+                    , sep=","
+                        ,na.strings = c(NA,"","NA","<NA>")
+                        #, comment.char = ""
+                  )
+test <- read.csv("pml-testing.csv", header = T
+                    , sep=","
+                        ,na.strings = c(NA,"","NA","<NA>")
+                        #, comment.char = ""
+                  )
+print(object.size(train),unit='Mb')
+
+head(train)
+names(train)
+summary(train)
+
+str(train)
+
+# discard NAs
+NAs <- apply(train,2,function(x) {sum(is.na(x))}) 
+validData <- train[,which(NAs <= (10/100)*nrow(train))]
+# make training set
+library(caret)
+trainIndex <- createDataPartition(y = validData$classe, p=0.2,list=FALSE)
+training <- validData[trainIndex,]
+# make model
+
+system.time(
+        modFit <- train(classe ~.,data = training,method="gbm")
+        )
+modFit
+
+testing <- validData[-trainIndex,]
+
+sapply(ls(), function(x) {
+        print(object.size(x),units='Mb')})
+rm()
+gc()
+
+```
+
+### Narrowing to most relevant informations
+```{r echo=TRUE}
+```
+#### Get quick informations on variables
+```{r echo=TRUE}
+str(rawdata)
+```
+#### Get deeper information on relevant numeric variables
+```{r echo=TRUE}
+summary(rawdata[,c("PROPDMG", "CROPDMG")])
+```
+#### Get deeper information on relevant ordinal variables
+```{r echo=TRUE}
+unique(rawdata$PROPDMGEXP)
+unique(rawdata$CROPDMGEXP)
+```
+#### Get deeper information on relevant categorical variables
+```{r echo=TRUE}
+length(unique(rawdata$EVTYPE))
+head(sort(unique(rawdata$EVTYPE)),50)
+```
+-> ToDo: We should group similar categorical variables!
+Hierarchical clustering based on distance and time proximity?
+Keywords?
+
+library(stringdist)
+library(data.table)
+evtype_sorted <- data.table(sort(unique(rawdata$EVTYPE)))
+head(evtype_sorted,50)
+
+mystrdist <- function(str1,str2) {
+        stringdist(tolower(str1),tolower(str2),method="jw")
+        }
+mystrdist("flood", " LIGHTNING")
+
+r <- sapply(evtype_sorted, mystrdist, "flood")
+r <- cbind(seq(1,nrow(r)),r)
+r_sorted <- r[order(r[,2]),]
+head(evtype_sorted[r_sorted[,1]],50)
+
+#faire une matrice 984x984, regrouper les 0 ou les minimums...
+
+#### Get deeper information on other potential relevant variables
+```{r echo=TRUE}
+head(unique(rawdata$REMARKS),3)
+```
+#### Let's narrow now
+```{r echo=TRUE}
+narrowdata <- subset(x = rawdata, subset = FATALITIES > 0 | INJURIES > 
+    0 | PROPDMG > 0 | CROPDMG > 0, select = c("STATE", "EVTYPE", "FATALITIES", "INJURIES", "PROPDMG", "CROPDMG", "PROPDMGEXP", "CROPDMGEXP"))
+print(object.size(narrowdata),unit='Mb')
+
+rm(rawdata)
+```
+### Data Transformation
+```{r echo=TRUE}
+cleandata <- narrowdata
+
+cleandata$PROPDMG_estimatedCost <- ifelse(
+        cleandata$PROPDMGEXP %in% c("K","k"),1000*cleandata$PROPDMG, 
+        ifelse(cleandata$PROPDMGEXP %in% c("M","m"),1000000*cleandata$PROPDMG, 
+               ifelse(cleandata$PROPDMGEXP %in% c("B","b"),1000000000*cleandata$PROPDMG,
+                      ifelse(cleandata$PROPDMGEXP %in% c("H","h"),100*cleandata$PROPDMG,
+                      cleandata$PROPDMG))))
+
+cleandata$CROPDMG_estimatedCost <- ifelse(
+        cleandata$CROPDMGEXP %in% c("K","k"),1000*cleandata$CROPDMG, 
+        ifelse(cleandata$CROPDMGEXP %in% c("M","m"),1000000*cleandata$CROPDMG, 
+               ifelse(cleandata$CROPDMGEXP %in% c("B","b"),1000000000*cleandata$CROPDMG,
+                      ifelse(cleandata$CROPDMGEXP %in% c("H","h"),100*cleandata$CROPDMG,
+                      cleandata$CROPDMG))))
+
+cleandata$TotalCostDamages <- cleandata$PROPDMG_estimatedCost + cleandata$CROPDMG_estimatedCost
+
+cleandata$TotalHealthEvents <- cleandata$FATALITIES + cleandata$INJURIES
+```
+
+## Results
+```{r echo=TRUE}
+library(plyr)
+library(ggplot2)
+
+TotalCostDamages <- aggregate(TotalCostDamages ~ EVTYPE, data = cleandata, sum )
+PROPDMG_estimatedCost <- aggregate(PROPDMG_estimatedCost ~ EVTYPE, data = cleandata, sum )
+CROPDMG_estimatedCost <- aggregate(CROPDMG_estimatedCost ~ EVTYPE, data = cleandata, sum )
+CostDamages <- join(TotalCostDamages, PROPDMG_estimatedCost, by = "EVTYPE")
+CostDamages <- join(CostDamages, CROPDMG_estimatedCost, by = "EVTYPE")
+
+CostDamages$check = CostDamages$TotalCostDamages - CostDamages$PROPDMG_estimatedCost - CostDamages$CROPDMG_estimatedCost
+CostDamages <- CostDamages[order(-CostDamages[,"TotalCostDamages"]),]
+
+sum(CostDamages$check)<1e-3
+
+qplot(EVTYPE,TotalCostDamages/1e9, data = CostDamages[1:5,], geom="bar", stat="identity"
+      ,xlab = "Event Type"
+      ,ylab = "Total Cost (Billions $)"
+      ,main = "Cost Damages from Extreme Weather"
+      )
+
+
+TotalHealthEvents <- aggregate(TotalHealthEvents ~ EVTYPE, data = cleandata, sum )
+TotalHealthEvents <- TotalHealthEvents[order(-TotalHealthEvents[,"TotalHealthEvents"]),]
+
+qplot(EVTYPE,TotalHealthEvents/1000, data = TotalHealthEvents[1:5,], geom="bar", stat="identity"
+      ,xlab = "Event Type"
+      ,ylab = "Fatalities + Injuries (1000)"
+      ,main = "Health Damages from Extreme Weather"
+      )
+
+```
