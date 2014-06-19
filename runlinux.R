@@ -1,3 +1,4 @@
+
 date()
 #download.file(fileUrl, destfile = "./data/w1.1.csv") #erreur avec: , method = "curl"
 
@@ -25,6 +26,8 @@ str(train)
 # discard NAs
 NAs <- apply(train,2,function(x) {sum(is.na(x))}) 
 validData <- train[,which(NAs <= (10/100)*nrow(train))]
+validData$X = NULL
+
 # make training set
 library(caret)
 trainIndex <- createDataPartition(y = validData$classe, p=0.2,list=FALSE)
@@ -37,6 +40,8 @@ system.time(
 modFit
 
 testing <- validData[-trainIndex,]
+pred <- predict(modFit,testing)
+table(pred,testing$classe)
 
 sapply(ls(), function(x) {
         print(object.size(x),units='Mb')})
