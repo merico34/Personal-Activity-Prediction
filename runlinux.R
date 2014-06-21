@@ -42,9 +42,14 @@ removeIndex <- grep("X|new_window|timestamp|user_name",names(rawtrain),value=F)
 keepIndex <- grep("_x$|_y$|_z$",names(rawtrain),value=F)
 
 ##Remove all together here
-#fulltrain <- rawtrain[,-c(which(NAs > (10/100)*nrow(rawtrain)),removeIndex)] #-> 54 predictors
-fulltrain <- rawtrain[,c(intersect(which(NAs <= (10/100)*nrow(rawtrain)),keepIndex),length(rawtrain))] #-> 37 predictors
-test <- rawtest[,c(intersect(which(NAs <= (10/100)*nrow(rawtrain)),keepIndex))]
+
+###Option 1
+fulltrain <- rawtrain[,-c(which(NAs > (10/100)*nrow(rawtrain)),removeIndex)] #-> 54 predictors
+test <- rawtest[,-c(which(NAs > (10/100)*nrow(rawtrain)),removeIndex)]
+
+###Option 2
+#fulltrain <- rawtrain[,c(intersect(which(NAs <= (10/100)*nrow(rawtrain)),keepIndex),length(rawtrain))] #-> 37 predictors
+#test <- rawtest[,c(intersect(which(NAs <= (10/100)*nrow(rawtrain)),keepIndex))]
 
 ##2nd (optional) pass: correlations NOT USED HERE
 M <- abs(cor(fulltrain[,-which(names(fulltrain)=="classe")]))
