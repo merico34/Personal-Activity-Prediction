@@ -121,7 +121,7 @@ system.time(
                         )
         )</code></pre>
 <pre><code>##    user  system elapsed 
-##  334.98    0.86  337.40</code></pre>
+##  331.00    0.78  332.47</code></pre>
 <pre class="r"><code># here model provide accuracy of 100% for the optimal model found by auto-tuning via cross-validation; This is the expected out of sample error
 modFit</code></pre>
 <pre><code>## Stochastic Gradient Boosting 
@@ -217,7 +217,7 @@ modFit</code></pre>
 <pre class="r"><code>#VALIDATING MODEL
 pred.part_validating &lt;- predict(modFit,part_validating)
 
-# Here cross-validation provide accuracy of 99.5% for our model
+# Here cross-validation provide accuracy of 97.4% for our model
 # this is another evaluation of the expected out of sample error
 confusionMatrix(pred.part_validating, part_validating$classe)</code></pre>
 <pre><code>## Confusion Matrix and Statistics

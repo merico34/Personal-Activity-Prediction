@@ -78,7 +78,7 @@ summary(modFit)
 #VALIDATING MODEL
 pred.part_validating <- predict(modFit,part_validating)
 
-# Here cross-validation provide accuracy of 99.5% for our model
+# Here cross-validation provide accuracy of 97.4% for our model
 # this is another evaluation of the expected out of sample error
 confusionMatrix(pred.part_validating, part_validating$classe)
 
