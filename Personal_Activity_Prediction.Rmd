@@ -6,7 +6,7 @@ In this project, my goal will be to use data from accelerometers on the belt, fo
 ## Data Loading
 ```{r echo=TRUE,cache=TRUE}
 library(caret)
-setwd("C:/Users/HomeUser/Documents/Spécialité Data Science/Practical Machine Learning/Projects/Personal-Activity-Prediction")
+setwd("C:/Users/HomeUser/Documents/Speciality Data Science/Practical Machine Learning/Projects/Personal-Activity-Prediction")
 rawtrain <- read.csv("pml-training.csv", header = T
                     , sep=","
                         ,na.strings = c(NA,"","NA","<NA>")
@@ -25,7 +25,7 @@ summary(rawtrain)
 
 str(rawtrain)
 
-#PREPROCESSING
+# PRE-PROCESSING
 
 # discard unuseful variables
 
@@ -131,7 +131,7 @@ pml_write_files = function(x){
     write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
   }
 }
-setwd("C:/Users/HomeUser/Documents/Spécialité Data Science/Practical Machine Learning/Projects/Personal-Activity-Prediction/results")
+setwd("C:/Users/HomeUser/Documents/Speciality Data Science/Practical Machine Learning/Projects/Personal-Activity-Prediction/results")
 pml_write_files(answers)
 
 ```

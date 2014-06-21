@@ -1,0 +1,90 @@
+Personal Activity Prediction
+========================================================
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. 
+In this project, my goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+## Data Loading
+```{r echo=TRUE,cache=TRUE}
+setwd("C:/Users/HomeUser/Documents/Speciality Data Science/Practical Machine Learning/Projects/Personal-Activity-Prediction")
+rawtrain <- read.csv("pml-training.csv", header = T
+                    , sep=","
+                        ,na.strings = c(NA,"","NA","<NA>")
+                        #, comment.char = ""
+                  )
+rawtest <- read.csv("pml-testing.csv", header = T
+                    , sep=","
+                        ,na.strings = c(NA,"","NA","<NA>")
+                        #, comment.char = ""
+                  )
+print(object.size(rawtrain),unit='Mb')
+
+# head(rawtrain)
+# names(rawtrain)
+# summary(rawtrain)
+# str(rawtrain)
+```
+
+## PRE-PROCESSING
+```{r echo=TRUE,cache=TRUE}
+library(caret)
+# discard unuseful variables
+
+##NAs
+NAs <- apply(rawtrain,2,function(x) {sum(is.na(x))}) #count NAs for each variable
+###We capture indexes of all non-sensor variables
+removeIndex <- grep("X|window|timestamp|user_name",names(rawtrain),value=F)
+
+##Remove all together here
+
+###If the quantity of NAs is superior to 10% for a variable, we drop this variable
+fulltrain <- rawtrain[,-c(which(NAs > (10/100)*nrow(rawtrain)),removeIndex)] 
+test <- rawtest[,-c(which(NAs > (10/100)*nrow(rawtrain)),removeIndex)]
+
+##Split data into train + validation datas 
+trainIndex <- createDataPartition(y = fulltrain$classe, p=0.7,list=FALSE)
+part_training <- fulltrain[trainIndex,]
+part_validating <- fulltrain[-trainIndex,]
+
+```
+
+## TRAINING
+```{r echo=TRUE,cache=TRUE}
+set.seed(123)
+
+# We choose a cross-validation of 4-folds instead of bootstrap default method for
+# gradient boosting model (gbm) in order to speed up training.
+fitControl <- trainControl(method = "cv", number = 4)
+
+# We provide additionnal parameters to gbm, not far from default ones
+gbmGrid <-  expand.grid(interaction.depth = 1:3,
+                        n.trees = (1:4)*50,
+                        shrinkage = 0.1
+                        )
+
+system.time(
+        modFit <- train(fulltrain[trainIndex,]$classe ~. 
+                        ,data = part_training
+                        ,method="gbm"
+                        ,trControl = fitControl
+                        ,verbose = FALSE
+                        ,tuneGrid = gbmGrid
+                        )
+        )
+# here model provide accuracy of 100% for the optimal model found by auto-tuning via cross-validation; This is the expected out of sample error
+modFit
+modFit$finalModel
+summary(modFit)
+
+#VALIDATING MODEL
+pred.part_validating <- predict(modFit,part_validating)
+
+# Here cross-validation provide accuracy of 99.5% for our model
+# this is another evaluation of the expected out of sample error
+confusionMatrix(pred.part_validating, part_validating$classe)
+
+#TESTING MODEL
+pred.test <- predict(modFit,test)
+
+#Predicted values on the test set:
+pred.test
+```
