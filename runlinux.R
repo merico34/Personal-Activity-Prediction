@@ -1,8 +1,9 @@
-require(caret) || install.packages("caret") 
-require(gbm) || install.packages("gbm") 
+require(gbm) || install.packages("gbm")
+require(randomForest) || install.packages("randomForest")
 require(e1071) || install.packages("e1071")
+require(caret) || install.packages("caret") 
 
-#library(caret)
+library(caret)
 
 date()
 #download.file(fileUrl, destfile = "./data/w1.1.csv") #erreur avec: , method = "curl"
