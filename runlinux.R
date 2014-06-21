@@ -1,3 +1,8 @@
+require(caret) || install.packages("caret") 
+require(gbm) || install.packages("gbm") 
+require(e1071) || install.packages("e1071")
+
+#library(caret)
 
 date()
 #download.file(fileUrl, destfile = "./data/w1.1.csv") #erreur avec: , method = "curl"
@@ -33,7 +38,7 @@ NAs <- apply(rawtrain,2,function(x) {sum(is.na(x))}) #count NAs for each variabl
 #removeIndex <- grep("X|window|timestamp|user_name",names(rawtrain),value=T) #assume...
 #removeIndex
 #qplot(rawtrain$num_window,rawtrain$classe)
-removeIndex <- grep("X|new_window|timestamp|user_name",names(rawtrain),value=F)
+removeIndex <- grep("X|window|timestamp|user_name",names(rawtrain),value=F)
 
 ##Remove all together here
 fulltrain <- rawtrain[,-c(which(NAs > (10/100)*nrow(rawtrain)),removeIndex)]
