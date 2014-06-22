@@ -1,10 +1,11 @@
+<!-- rmarkdown v1 -->
 Personal Activity Prediction
 ========================================================
 Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. 
 In this project, my goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
 
 ## Data Loading
-```{r echo=TRUE,cache=TRUE}
+```{r echo=TRUE}
 setwd("C:/Users/HomeUser/Documents/Speciality Data Science/Practical Machine Learning/Projects/Personal-Activity-Prediction")
 rawtrain <- read.csv("pml-training.csv", header = T
                     , sep=","
@@ -25,7 +26,7 @@ print(object.size(rawtrain),unit='Mb')
 ```
 
 ## PRE-PROCESSING
-```{r echo=TRUE,cache=TRUE}
+```{r echo=TRUE}
 library(caret)
 # discard unuseful variables
 
@@ -48,7 +49,7 @@ part_validating <- fulltrain[-trainIndex,]
 ```
 
 ## TRAINING
-```{r echo=TRUE,cache=TRUE}
+```{r echo=TRUE}
 set.seed(123)
 
 # We choose a cross-validation of 4-folds instead of bootstrap default method for
@@ -70,16 +71,17 @@ system.time(
                         ,tuneGrid = gbmGrid
                         )
         )
-# here model provide accuracy of 100% for the optimal model found by auto-tuning via cross-validation; This is the expected out of sample error
+# here model provide accuracy of 100% for the optimal model found by auto-tuning via cross-validation; This is the best out of bag error.
 modFit
 modFit$finalModel
 summary(modFit)
 
 #VALIDATING MODEL
 pred.part_validating <- predict(modFit,part_validating)
-
-# Here cross-validation provide accuracy of 97.4% for our model
-# this is another evaluation of the expected out of sample error
+```
+Here cross-validation provide accuracy of 97.4% for our model:
+this is the expected out of sample error
+```{r echo=TRUE}
 confusionMatrix(pred.part_validating, part_validating$classe)
 
 #TESTING MODEL
