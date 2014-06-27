@@ -71,7 +71,7 @@ system.time(
                         ,tuneGrid = gbmGrid
                         )
         )
-# here model provide accuracy of 100% for the optimal model found by auto-tuning via cross-validation; This is the best out of bag error.
+# here model provide accuracy of 100% for the optimal model found by auto-tuning via cross-validation; This corresponds to a 0% out of bag error.
 modFit
 modFit$finalModel
 summary(modFit)
@@ -80,7 +80,7 @@ summary(modFit)
 pred.part_validating <- predict(modFit,part_validating)
 ```
 Here cross-validation provide accuracy of 97.4% for our model:
-this is the expected out of sample error
+thus an expected out of sample error of 2.6%
 ```{r echo=TRUE}
 confusionMatrix(pred.part_validating, part_validating$classe)
 
